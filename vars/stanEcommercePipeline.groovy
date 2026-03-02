@@ -40,33 +40,29 @@ def call(Map config) {
                 steps {
                     script {
                         if (env.LANGUAGE == 'nodejs') {
-                            try {
-                                // Runs as root for npm install
-                                sh "docker run --rm -v \${PWD}:/app -w /app node:20-alpine npm install"
-                            } finally {
-                                // GUARANTEED CLEANUP: Resets file ownership to the Jenkins user so cleanWs() doesn't crash
-                                sh "docker run --rm -v \${PWD}:/app -w /app alpine chown -R \$(id -u):\$(id -g) ."
+                            // Uses the Jenkins Docker Plugin to automatically handle DooD workspace mapping
+                            docker.image('node:20-alpine').inside {
+                                sh "npm install"
                             }
                         } else if (env.LANGUAGE == 'java') {
                             sh "${MVN_HOME}/bin/mvn clean package"
                         } else if (env.LANGUAGE == 'python') {
-                            try {
-                                // Added 'set -e' to ensure test failures instantly fail the sh block
+                            // Python requires root to pip install global packages
+                            docker.image('python:3.12-alpine').inside('-u root') {
                                 sh """
-                                    docker run --rm -v \${PWD}:/app -w /app python:3.12-alpine sh -c '
-                                        set -e
-                                        pip install flake8 pytest pytest-cov
-                                        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-                                        if [ -d "tests" ]; then 
-                                            pytest --cov=app tests/ --junitxml=test-reports/results.xml
-                                        else 
-                                            mkdir -p test-reports
-                                            echo "<testsuites></testsuites>" > test-reports/results.xml
-                                        fi
-                                    '
+                                    set -e
+                                    pip install flake8 pytest pytest-cov
+                                    flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+                                    if [ -d "tests" ]; then 
+                                        pytest --cov=app tests/ --junitxml=test-reports/results.xml
+                                    else 
+                                        mkdir -p test-reports
+                                        echo "<testsuites></testsuites>" > test-reports/results.xml
+                                    fi
+                                    
+                                    // Relinquish file locks so Jenkins cleanWs() doesn't crash
+                                    chmod -R 777 .
                                 """
-                            } finally {
-                                sh "docker run --rm -v \${PWD}:/app -w /app alpine chown -R \$(id -u):\$(id -g) ."
                             }
                         }
                     }
