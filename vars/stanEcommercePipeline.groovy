@@ -54,13 +54,13 @@ def call(Map config) {
                                     pip install flake8 pytest pytest-cov
                                     flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
                                     if [ -d "tests" ]; then 
-                                        pytest --cov=app tests/ --junitxml=test-reports/results.xml
+                                        pytest --cov=src tests/ --junitxml=test-reports/results.xml
                                     else 
                                         mkdir -p test-reports
                                         echo "<testsuites></testsuites>" > test-reports/results.xml
                                     fi
                                     
-                                    // Relinquish file locks so Jenkins cleanWs() doesn't crash
+                                    # Relinquish file locks so Jenkins cleanWs() doesn't crash
                                     chmod -R 777 .
                                 """
                             }
