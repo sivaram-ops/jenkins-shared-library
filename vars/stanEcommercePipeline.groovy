@@ -16,7 +16,7 @@ def call(Map config) {
             OWASP_HOME = tool 'DP-Check'
             MVN_HOME = tool 'maven' 
             
-            GITOPS_REPO = "https://github.com/sivaram-ops/roboshop-gitops.git" 
+            GITOPS_REPO = "https://github.com/sivaram-ops/cd-roboshop.git" 
         }
 
         stages {
@@ -176,7 +176,7 @@ def call(Map config) {
                         echo "Updating GitOps repo for ${SERVICE_NAME} to tag ${IMAGE_TAG}..."
                         withCredentials([usernamePassword(credentialsId: 'github-token', passwordVariable: 'GIT_PASS', usernameVariable: 'GIT_USER')]) {
                             sh """
-                                git clone https://${GIT_USER}:${GIT_PASS}@github.com/sivaram-ops/roboshop-gitops.git gitops-workspace
+                                git clone https://${GIT_USER}:${GIT_PASS}@github.com/sivaram-ops/cd-roboshop.git gitops-workspace
                                 cd gitops-workspace
                                 
                                 # Highly targeted regex ensures no YAML syntax is broken
